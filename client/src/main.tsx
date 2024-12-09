@@ -8,20 +8,34 @@ import { Toaster } from "@/components/ui/toaster";
 import { Home } from "./pages/Home";
 import { Reader } from "./pages/Reader";
 
-function App() {
+function Router() {
   return (
-    <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <Switch>
-          <Route path="/" component={Home} />
-          <Route path="/read/:id" component={Reader} />
-          <Route>404 Page Not Found</Route>
-        </Switch>
-        <Toaster />
-      </QueryClientProvider>
-    </StrictMode>
+    <Switch>
+      <Route path="/" component={Home} />
+      <Route path="/read/:id" component={Reader} />
+      <Route>404 Page Not Found</Route>
+    </Switch>
   );
 }
 
-const root = createRoot(document.getElementById("root")!);
-root.render(<App />);
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <Router />
+      <Toaster />
+    </QueryClientProvider>
+  );
+}
+
+const rootElement = document.getElementById("root");
+
+if (!rootElement) {
+  throw new Error("Failed to find the root element");
+}
+
+const root = createRoot(rootElement);
+root.render(
+  <StrictMode>
+    <App />
+  </StrictMode>
+);
