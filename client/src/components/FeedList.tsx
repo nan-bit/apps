@@ -6,6 +6,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { EditFeedDialog } from "./EditFeedDialog";
 
 interface FeedListProps {
   feeds: Feed[];
@@ -41,12 +42,16 @@ export function FeedList({ feeds, selectedFeed, onSelectFeed }: FeedListProps) {
             {feeds.map((feed) => (
               <div
                 key={feed.id}
-                className={`p-2 rounded cursor-pointer ${
+                className={`p-2 rounded cursor-pointer group flex items-center justify-between ${
                   selectedFeed === feed.id ? "bg-primary/10" : ""
                 }`}
-                onClick={() => onSelectFeed(feed.id)}
               >
-                {feed.title}
+                <div onClick={() => onSelectFeed(feed.id)}>
+                  {feed.customTitle || feed.title}
+                </div>
+                <div className="flex">
+                  <EditFeedDialog feed={feed} />
+                </div>
               </div>
             ))}
           </div>

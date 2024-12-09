@@ -61,10 +61,56 @@ export function registerRoutes(app: Express) {
     }
   });
 
+  app.patch("/api/feeds/:id", async (req, res) => {
+    const { id } = req.params;
+    const { customTitle } = req.body;
+    
+    try {
+      const feedId = parseInt(id);
+      if (isNaN(feedId)) {
+        return res.status(400).json({ error: "Invalid feed ID" });
+      }
+
+      const updated = await db
+        .update(feeds)
+        .set({ customTitle })
+        .where(eq(feeds.id, feedId))
+        .returning();
+
+      if (!updated.length) {
+        return res.status(404).json({ error: "Feed not found" });
+      }
+
+      res.json(updated[0]);
+    } catch (error) {
+      console.error('Feed update error:', error);
+      res.status(500).json({ error: "Failed to update feed" });
+    }
+  });
+
   app.delete("/api/feeds/:id", async (req, res) => {
     const { id } = req.params;
-    await db.delete(feeds).where(eq(feeds.id, parseInt(id)));
-    res.status(204).send();
+    
+    try {
+      const feedId = parseInt(id);
+      if (isNaN(feedId)) {
+        return res.status(400).json({ error: "Invalid feed ID" });
+      }
+
+      const deleted = await db
+        .delete(feeds)
+        .where(eq(feeds.id, feedId))
+        .returning();
+
+      if (!deleted.length) {
+        return res.status(404).json({ error: "Feed not found" });
+      }
+
+      res.status(204).send();
+    } catch (error) {
+      console.error('Feed deletion error:', error);
+      res.status(500).json({ error: "Failed to delete feed" });
+    }
   });
 
   // Articles

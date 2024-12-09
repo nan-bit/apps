@@ -12,6 +12,7 @@ export const categories = pgTable("categories", {
 export const feeds = pgTable("feeds", {
   id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
   title: text("title").notNull(),
+  customTitle: text("custom_title"),
   url: text("url").notNull().unique(),
   categoryId: integer("category_id").references(() => categories.id),
   lastFetched: timestamp("last_fetched"),
