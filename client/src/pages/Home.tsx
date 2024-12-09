@@ -7,6 +7,7 @@ import { FeedList } from "../components/FeedList";
 import { ArticleCard } from "../components/ArticleCard";
 import { AddFeedDialog } from "../components/AddFeedDialog";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { MoonIcon, SunIcon } from "lucide-react";
 import { articleStorage } from "../lib/indexedDb";
 
@@ -25,24 +26,43 @@ export function Home() {
     return isNaN(numericId) ? null : numericId;
   });
 
-  useEffect(() => {
-    // Update URL when feed selection changes
-    const newUrl = selectedFeed === null 
+  // Update URL when feed selection changes
+  const updateUrl = (newFeed: number | null) => {
+    const newUrl = newFeed === null 
       ? '/' 
-      : selectedFeed === -1 
+      : newFeed === -1 
         ? '/?source=bookmarked' 
-        : `/?source=${selectedFeed}`;
-    
+        : `/?source=${newFeed}`;
     window.history.replaceState(null, '', newUrl);
-  }, [selectedFeed]);
+  };
+
+  const handleFeedSelection = (feedId: number | null) => {
+    setSelectedFeed(feedId);
+    updateUrl(feedId);
+  };
   const { theme, setTheme } = useTheme();
   
-  const { data: feeds } = useQuery<Feed[]>({
+  const { data: feeds, isLoading: isLoadingFeeds, isError: isFeedsError, error: feedsError } = useQuery<Feed[]>({
     queryKey: ["feeds"],
-    queryFn: () => fetch("/api/feeds").then((res) => res.json()),
+    queryFn: async () => {
+      const response = await fetch("/api/feeds");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to fetch feeds');
+      }
+      return response.json();
+    },
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
 
-  const { data: articles = [], isError, error } = useQuery<Article[]>({
+  const { 
+    data: articles = [], 
+    isLoading: isLoadingArticles,
+    isError: isArticlesError, 
+    error: articlesError,
+    refetch: refetchArticles
+  } = useQuery<Article[]>({
     queryKey: ["articles", selectedFeed],
     queryFn: async () => {
       const endpoint = selectedFeed === -1 
@@ -56,6 +76,8 @@ export function Home() {
       }
       return response.json();
     },
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
 
   const toggleTheme = () => {
@@ -77,18 +99,51 @@ export function Home() {
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <aside className="md:col-span-1">
-            <FeedList
-              feeds={feeds || []}
-              selectedFeed={selectedFeed}
-              onSelectFeed={setSelectedFeed}
-            />
+            {isLoadingFeeds ? (
+              <div className="space-y-2">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-8 w-3/4" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-5/6" />
+              </div>
+            ) : isFeedsError ? (
+              <div className="text-center space-y-4">
+                <div className="text-destructive">
+                  {feedsError instanceof Error ? feedsError.message : 'Failed to load feeds'}
+                </div>
+                <Button onClick={() => window.location.reload()} variant="outline">
+                  Retry
+                </Button>
+              </div>
+            ) : (
+              <FeedList
+                feeds={feeds || []}
+                selectedFeed={selectedFeed}
+                onSelectFeed={handleFeedSelection}
+              />
+            )}
           </aside>
 
           <main className="md:col-span-3">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {isError ? (
-                <div className="col-span-full text-center text-destructive">
-                  {error instanceof Error ? error.message : 'Failed to load articles'}
+              {isLoadingArticles ? (
+                <>
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="space-y-4">
+                      <Skeleton className="h-48 w-full" />
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-4 w-1/2" />
+                    </div>
+                  ))}
+                </>
+              ) : isArticlesError ? (
+                <div className="col-span-full text-center space-y-4">
+                  <div className="text-destructive">
+                    {articlesError instanceof Error ? articlesError.message : 'Failed to load articles'}
+                  </div>
+                  <Button onClick={() => refetchArticles()} variant="outline">
+                    Try Again
+                  </Button>
                 </div>
               ) : (
                 articles.map((article) => (

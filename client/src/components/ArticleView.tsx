@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Article } from "@db/schema";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { Link } from "wouter";
 import { ExternalLink, Bookmark, BookmarkCheck } from "lucide-react";
@@ -14,31 +16,43 @@ interface ArticleViewProps {
 export function ArticleView({ article }: ArticleViewProps) {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [isContentError, setIsContentError] = useState(false);
 
   const bookmarkMutation = useMutation({
     mutationFn: async ({ id, bookmarked }: { id: number; bookmarked: boolean }) => {
-      const response = await fetch(`/api/articles/${id}/bookmark`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bookmarked }),
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to update bookmark");
+      try {
+        const response = await fetch(`/api/articles/${id}/bookmark`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bookmarked }),
+        });
+        
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Failed to update bookmark");
+        }
+        
+        return response.json();
+      } catch (error) {
+        if (error instanceof Error) {
+          throw new Error(`Bookmark failed: ${error.message}`);
+        }
+        throw new Error('Failed to update bookmark');
       }
-      
-      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["articles"] });
       queryClient.invalidateQueries({ queryKey: ["article", article.id.toString()] });
+      toast({
+        title: "Success",
+        description: article.bookmarked ? "Article removed from bookmarks" : "Article bookmarked",
+      });
     },
     onError: (error) => {
       console.error('Bookmark error:', error);
       toast({
         title: "Error",
-        description: error.message,
+        description: error instanceof Error ? error.message : "Failed to update bookmark",
         variant: "destructive",
       });
     },
@@ -50,6 +64,27 @@ export function ArticleView({ article }: ArticleViewProps) {
       bookmarked: !article.bookmarked,
     });
   };
+
+  if (!article) {
+    return (
+      <Card className="max-w-3xl mx-auto">
+        <CardHeader className="space-y-3">
+          <Skeleton className="h-8 w-3/4" />
+          <div className="space-y-2">
+            <Skeleton className="h-4 w-1/4" />
+            <Skeleton className="h-4 w-1/3" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <Skeleton className="h-40 w-full" />
+            <Skeleton className="h-20 w-5/6" />
+            <Skeleton className="h-20 w-full" />
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="max-w-3xl mx-auto">

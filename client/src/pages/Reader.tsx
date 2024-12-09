@@ -12,7 +12,7 @@ export function Reader() {
   const params = new URLSearchParams(location.split('?')[1] || '');
   const source = params.get('source');
 
-  const { data: article, isLoading, isError } = useQuery<Article>({
+  const { data: article, isLoading, isError, error, refetch } = useQuery<Article>({
     queryKey: ["article", id],
     queryFn: async () => {
       if (!id) throw new Error("Article ID is required");
@@ -24,33 +24,54 @@ export function Reader() {
       return response.json();
     },
     staleTime: 5 * 60 * 1000, // Keep fresh for 5 minutes
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
 
-  if (isError) {
+  // Back button is always rendered to maintain navigation
+  const BackButton = () => (
+    <Link href={source ? `/?source=${source}` : '/'}>
+      <Button variant="ghost" className="mb-4" disabled={isLoading}>
+        <ArrowLeft className="mr-2" /> Back to list
+      </Button>
+    </Link>
+  );
+
+  // Loading state with skeleton
+  if (isLoading || !article) {
     return (
       <div className="container mx-auto p-4">
-        <Link href={source ? `/?source=${source}` : '/'}>
-          <Button variant="ghost" className="mb-4">
-            <ArrowLeft className="mr-2" /> Back to list
-          </Button>
-        </Link>
-        <div className="text-center text-destructive">
-          Failed to load article. Please try again later.
+        <BackButton />
+        <div className="max-w-3xl mx-auto">
+          <div className="space-y-4">
+            <Skeleton className="h-12 w-3/4" />
+            <div className="flex justify-between items-center">
+              <Skeleton className="h-4 w-1/4" />
+              <Skeleton className="h-8 w-8 rounded-full" />
+            </div>
+            <div className="space-y-4">
+              <Skeleton className="h-40 w-full" />
+              <Skeleton className="h-20 w-5/6" />
+              <Skeleton className="h-20 w-full" />
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (isLoading || !article) {
+  // Error state with retry button
+  if (isError) {
     return (
       <div className="container mx-auto p-4">
-        <Button variant="ghost" className="mb-4" disabled>
-          <ArrowLeft className="mr-2" /> Back to list
-        </Button>
-        <div className="space-y-4">
-          <Skeleton className="h-8 w-3/4" />
-          <Skeleton className="h-4 w-1/4" />
-          <Skeleton className="h-40 w-full" />
+        <BackButton />
+        <div className="max-w-3xl mx-auto text-center space-y-4">
+          <div className="text-destructive font-medium">
+            {error instanceof Error ? error.message : "Failed to load article"}
+          </div>
+          <Button onClick={() => refetch()} variant="outline">
+            Try Again
+          </Button>
         </div>
       </div>
     );
