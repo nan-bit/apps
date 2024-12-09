@@ -17,7 +17,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
-      <Route path="/read/:id:source?" component={Reader} />
+      <Route path="/read/:id" component={Reader} />
       <Route>404 Page Not Found</Route>
     </Switch>
   );

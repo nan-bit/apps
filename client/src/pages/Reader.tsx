@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useParams, Link } from "wouter";
+import { useParams, Link, useLocation } from "wouter";
 import { ArticleView } from "../components/ArticleView";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
@@ -7,7 +7,8 @@ import { Article } from "@db/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function Reader() {
-  const { id, source } = useParams();
+  const { id } = useParams();
+  const [location] = useLocation();
 
   const { data: article, isLoading, isError } = useQuery<Article>({
     queryKey: ["article", id],
@@ -20,7 +21,7 @@ export function Reader() {
   if (isError) {
     return (
       <div className="container mx-auto p-4">
-        <Link href={`/?source=${source || ''}`}>
+        <Link href={location.includes('source=') ? `/?${location.split('?')[1]}` : '/'}>
           <Button variant="ghost" className="mb-4">
             <ArrowLeft className="mr-2" /> Back to list
           </Button>
@@ -49,7 +50,7 @@ export function Reader() {
 
   return (
     <div className="container mx-auto p-4">
-      <Link href="/">
+      <Link href={location.includes('source=') ? `/?${location.split('?')[1]}` : '/'}>
         <Button variant="ghost" className="mb-4">
           <ArrowLeft className="mr-2" /> Back to list
         </Button>
