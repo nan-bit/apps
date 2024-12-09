@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { useTheme } from "../hooks/use-theme";
+import { useTheme } from "@/hooks/use-theme";
 import { Feed, Article } from "@db/schema";
 import { FeedList } from "../components/FeedList";
 import { ArticleCard } from "../components/ArticleCard";

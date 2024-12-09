@@ -97,6 +97,12 @@ export function registerRoutes(app: Express) {
         return res.status(400).json({ error: "Invalid feed ID" });
       }
 
+      // First delete all articles associated with this feed
+      await db
+        .delete(articles)
+        .where(eq(articles.feedId, feedId));
+
+      // Then delete the feed
       const deleted = await db
         .delete(feeds)
         .where(eq(feeds.id, feedId))
