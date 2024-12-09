@@ -29,7 +29,7 @@ export function Reader() {
   if (isError) {
     return (
       <div className="container mx-auto p-4">
-        <Link href={location.includes('source=') ? `/?${location.split('?')[1]}` : '/'}>
+        <Link href={source ? `/?source=${source}` : '/'}>
           <Button variant="ghost" className="mb-4">
             <ArrowLeft className="mr-2" /> Back to list
           </Button>
