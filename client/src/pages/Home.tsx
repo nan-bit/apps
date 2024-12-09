@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useTheme } from "../hooks/use-theme";
 import { Feed, Article } from "@db/schema";
 import { FeedList } from "../components/FeedList";
 import { ArticleCard } from "../components/ArticleCard";
@@ -9,8 +10,8 @@ import { MoonIcon, SunIcon, PlusIcon } from "lucide-react";
 
 export function Home() {
   const [selectedFeed, setSelectedFeed] = useState<number | null>(null);
-  const [isDark, setIsDark] = useState(false);
-
+  const { theme, setTheme } = useTheme();
+  
   const { data: feeds } = useQuery<Feed[]>({
     queryKey: ["feeds"],
     queryFn: () => fetch("/api/feeds").then((res) => res.json()),
@@ -22,8 +23,7 @@ export function Home() {
   });
 
   const toggleTheme = () => {
-    setIsDark(!isDark);
-    document.documentElement.classList.toggle("dark");
+    setTheme(theme === 'light' ? 'dark' : 'light');
   };
 
   return (
@@ -34,7 +34,7 @@ export function Home() {
           <div className="flex gap-2">
             <AddFeedDialog />
             <Button variant="outline" size="icon" onClick={toggleTheme}>
-              {isDark ? <SunIcon /> : <MoonIcon />}
+              {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
             </Button>
           </div>
         </header>
