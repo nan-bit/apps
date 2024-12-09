@@ -75,6 +75,17 @@ export function registerRoutes(app: Express) {
     });
     res.json(allArticles);
   });
+  app.get("/api/articles/:id", async (req, res) => {
+    const { id } = req.params;
+    const article = await db.query.articles.findFirst({
+      where: eq(articles.id, parseInt(id))
+    });
+    if (!article) {
+      return res.status(404).json({ error: "Article not found" });
+    }
+    res.json(article);
+  });
+
 
   app.patch("/api/articles/:id", async (req, res) => {
     const { id } = req.params;

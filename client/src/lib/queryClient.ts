@@ -5,9 +5,9 @@ export const queryClient = new QueryClient({
     queries: {
       queryFn: async ({ queryKey }) => {
         const [endpoint, ...params] = queryKey;
-        const url = typeof endpoint === 'string' 
-          ? endpoint
-          : endpoint.join('/');
+        const url = Array.isArray(endpoint)
+          ? endpoint.join('/')
+          : String(endpoint);
 
         const res = await fetch(url, {
           credentials: "include",
@@ -27,7 +27,7 @@ export const queryClient = new QueryClient({
       refetchInterval: false,
       refetchOnWindowFocus: false,
       staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 30 * 60 * 1000, // 30 minutes
+      gcTime: 30 * 60 * 1000, // 30 minutes
       retry: (failureCount, error) => {
         if (error instanceof Error && error.message.startsWith('404')) {
           return false;
