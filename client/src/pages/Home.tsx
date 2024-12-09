@@ -17,13 +17,18 @@ export function Home() {
     queryFn: () => fetch("/api/feeds").then((res) => res.json()),
   });
 
-  const { data: articles } = useQuery<Article[]>({
+  const { data: articles = [] } = useQuery<Article[]>({
     queryKey: ["articles", selectedFeed],
-    queryFn: () => {
-      if (selectedFeed === -1) {
-        return fetch("/api/articles/bookmarked").then((res) => res.json());
+    queryFn: async () => {
+      const endpoint = selectedFeed === -1 
+        ? "/api/articles/bookmarked"
+        : `/api/articles${selectedFeed ? `?feedId=${selectedFeed}` : ''}`;
+        
+      const response = await fetch(endpoint);
+      if (!response.ok) {
+        throw new Error('Failed to fetch articles');
       }
-      return fetch(`/api/articles${selectedFeed ? `?feedId=${selectedFeed}` : ''}`).then((res) => res.json());
+      return response.json();
     },
   });
 

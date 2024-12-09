@@ -78,6 +78,16 @@ export function registerRoutes(app: Express) {
     });
     res.json(allArticles);
   });
+
+  app.get("/api/articles/bookmarked", async (req, res) => {
+    const bookmarkedArticles = await db.query.articles.findMany({
+      where: eq(articles.bookmarked, true),
+      orderBy: (articles, { desc }) => [desc(articles.pubDate)],
+      limit: 50,
+    });
+    res.json(bookmarkedArticles);
+  });
+
   app.get("/api/articles/:id", async (req, res) => {
     const { id } = req.params;
     const articleId = parseInt(id);
