@@ -9,13 +9,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function Reader() {
   const { id } = useParams();
   const [location] = useLocation();
+  const params = new URLSearchParams(location.split('?')[1]);
+  const source = params.get('source');
 
   const { data: article, isLoading, isError } = useQuery<Article>({
     queryKey: ["article", id],
-    queryFn: () => fetch(`/api/articles/${id}`).then((res) => {
-      if (!res.ok) throw new Error("Failed to fetch article");
-      return res.json();
-    }),
+    queryFn: async () => {
+      if (!id) throw new Error("Article ID is required");
+      const response = await fetch(`/api/articles/${id}`);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to fetch article");
+      }
+      return response.json();
+    },
+    staleTime: 5 * 60 * 1000, // Keep fresh for 5 minutes
   });
 
   if (isError) {
@@ -50,7 +58,7 @@ export function Reader() {
 
   return (
     <div className="container mx-auto p-4">
-      <Link href={location.includes('source=') ? `/?${location.split('?')[1]}` : '/'}>
+      <Link href={source ? `/?source=${source}` : '/'}>
         <Button variant="ghost" className="mb-4">
           <ArrowLeft className="mr-2" /> Back to list
         </Button>

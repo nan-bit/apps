@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useTheme } from "../hooks/use-theme";
@@ -7,7 +7,8 @@ import { FeedList } from "../components/FeedList";
 import { ArticleCard } from "../components/ArticleCard";
 import { AddFeedDialog } from "../components/AddFeedDialog";
 import { Button } from "@/components/ui/button";
-import { MoonIcon, SunIcon, PlusIcon } from "lucide-react";
+import { MoonIcon, SunIcon } from "lucide-react";
+import { articleStorage } from "../lib/indexedDb";
 
 export function Home() {
   const [location] = useLocation();
@@ -20,6 +21,24 @@ export function Home() {
     const numericId = parseInt(sourceId);
     return isNaN(numericId) ? null : numericId;
   });
+
+  useEffect(() => {
+    // Persist selected feed to IndexedDB
+    if (selectedFeed !== undefined) {
+      articleStorage.saveState('selectedFeed', selectedFeed);
+    }
+  }, [selectedFeed]);
+
+  useEffect(() => {
+    // Restore selected feed from IndexedDB if not in URL
+    if (sourceId === null) {
+      articleStorage.getState<number | null>('selectedFeed')
+        .then(saved => {
+          if (saved !== null) setSelectedFeed(saved);
+        })
+        .catch(console.error);
+    }
+  }, []);
   const { theme, setTheme } = useTheme();
   
   const { data: feeds } = useQuery<Feed[]>({

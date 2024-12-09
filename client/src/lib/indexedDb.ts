@@ -1,13 +1,18 @@
 import { Article } from "@db/schema";
 
 const DB_NAME = "rss_reader";
-const STORE_NAME = "articles";
+const STORES = {
+  ARTICLES: "articles",
+  STATE: "app_state"
+} as const;
 
 export class ArticleStorage {
   private db: IDBDatabase | null = null;
 
-  async init() {
-    return new Promise<void>((resolve, reject) => {
+  private async init(): Promise<void> {
+    if (this.db) return;
+
+    return new Promise((resolve, reject) => {
       const request = indexedDB.open(DB_NAME, 1);
 
       request.onerror = () => reject(request.error);
@@ -18,38 +23,64 @@ export class ArticleStorage {
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
-        if (!db.objectStoreNames.contains(STORE_NAME)) {
-          db.createObjectStore(STORE_NAME, { keyPath: "id" });
+        if (!db.objectStoreNames.contains(STORES.ARTICLES)) {
+          db.createObjectStore(STORES.ARTICLES, { keyPath: "id" });
+        }
+        if (!db.objectStoreNames.contains(STORES.STATE)) {
+          db.createObjectStore(STORES.STATE, { keyPath: "key" });
         }
       };
     });
   }
 
-  async saveArticles(articles: Article[]) {
+  async saveArticles(articles: Article[]): Promise<void> {
     if (!this.db) await this.init();
-    const transaction = this.db!.transaction(STORE_NAME, "readwrite");
-    const store = transaction.objectStore(STORE_NAME);
+    const transaction = this.db!.transaction(STORES.ARTICLES, "readwrite");
+    const store = transaction.objectStore(STORES.ARTICLES);
 
-    return Promise.all(
-      articles.map((article) => {
-        return new Promise<void>((resolve, reject) => {
-          const request = store.put(article);
-          request.onerror = () => reject(request.error);
-          request.onsuccess = () => resolve();
-        });
-      })
-    );
+    return new Promise((resolve, reject) => {
+      articles.forEach(article => {
+        store.put(article);
+      });
+
+      transaction.oncomplete = () => resolve();
+      transaction.onerror = () => reject(transaction.error);
+    });
   }
 
   async getArticles(): Promise<Article[]> {
     if (!this.db) await this.init();
-    return new Promise((resolve, reject) => {
-      const transaction = this.db!.transaction(STORE_NAME, "readonly");
-      const store = transaction.objectStore(STORE_NAME);
-      const request = store.getAll();
+    const transaction = this.db!.transaction(STORES.ARTICLES, "readonly");
+    const store = transaction.objectStore(STORES.ARTICLES);
 
+    return new Promise((resolve, reject) => {
+      const request = store.getAll();
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve(request.result);
+    });
+  }
+
+  async saveState(key: string, value: any): Promise<void> {
+    if (!this.db) await this.init();
+    const transaction = this.db!.transaction(STORES.STATE, "readwrite");
+    const store = transaction.objectStore(STORES.STATE);
+
+    return new Promise((resolve, reject) => {
+      const request = store.put({ key, value });
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve();
+    });
+  }
+
+  async getState<T>(key: string): Promise<T | null> {
+    if (!this.db) await this.init();
+    const transaction = this.db!.transaction(STORES.STATE, "readonly");
+    const store = transaction.objectStore(STORES.STATE);
+
+    return new Promise((resolve, reject) => {
+      const request = store.get(key);
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(request.result?.value ?? null);
     });
   }
 }
