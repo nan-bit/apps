@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { useTheme } from "../hooks/use-theme";
 import { Feed, Article } from "@db/schema";
 import { FeedList } from "../components/FeedList";
@@ -9,7 +10,16 @@ import { Button } from "@/components/ui/button";
 import { MoonIcon, SunIcon, PlusIcon } from "lucide-react";
 
 export function Home() {
-  const [selectedFeed, setSelectedFeed] = useState<number | null>(null);
+  const [location] = useLocation();
+  const params = new URLSearchParams(location.split('?')[1]);
+  const sourceId = params.get('source');
+  
+  const [selectedFeed, setSelectedFeed] = useState<number | null>(() => {
+    if (sourceId === null) return null;
+    if (sourceId === 'bookmarked') return -1;
+    const numericId = parseInt(sourceId);
+    return isNaN(numericId) ? null : numericId;
+  });
   const { theme, setTheme } = useTheme();
   
   const { data: feeds } = useQuery<Feed[]>({
@@ -67,7 +77,7 @@ export function Home() {
                 </div>
               ) : (
                 articles.map((article) => (
-                  <ArticleCard key={article.id} article={article} />
+                  <ArticleCard key={article.id} article={article} selectedFeed={selectedFeed} />
                 ))
               )}
             </div>

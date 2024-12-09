@@ -7,7 +7,7 @@ import { Article } from "@db/schema";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function Reader() {
-  const { id } = useParams();
+  const { id, source } = useParams();
 
   const { data: article, isLoading, isError } = useQuery<Article>({
     queryKey: ["article", id],
@@ -20,7 +20,7 @@ export function Reader() {
   if (isError) {
     return (
       <div className="container mx-auto p-4">
-        <Link href="/">
+        <Link href={`/?source=${source || ''}`}>
           <Button variant="ghost" className="mb-4">
             <ArrowLeft className="mr-2" /> Back to list
           </Button>

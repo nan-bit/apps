@@ -6,13 +6,14 @@ import { BookmarkCheck } from "lucide-react";
 
 interface ArticleCardProps {
   article: Article;
+  selectedFeed?: number | null;
 }
 
-export function ArticleCard({ article }: ArticleCardProps) {
+export function ArticleCard({ article, selectedFeed }: ArticleCardProps) {
   if (!article) return null;
   
   return (
-    <Link href={`/read/${article.id}`}>
+    <Link href={`/read/${article.id}?source=${selectedFeed || ''}`}>
       <Card className="cursor-pointer hover:shadow-lg transition-shadow">
         <CardHeader>
           <div className="flex justify-between items-start gap-2">
