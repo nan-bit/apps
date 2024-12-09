@@ -69,7 +69,11 @@ export function registerRoutes(app: Express) {
 
   // Articles
   app.get("/api/articles", async (req, res) => {
+    const { feedId } = req.query;
+    const whereClause = feedId ? { where: eq(articles.feedId, parseInt(feedId as string)) } : {};
+    
     const allArticles = await db.query.articles.findMany({
+      ...whereClause,
       orderBy: (articles, { desc }) => [desc(articles.pubDate)],
       limit: 50,
     });
