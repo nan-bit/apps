@@ -16,29 +16,25 @@ export function Home() {
   const sourceId = params.get('source');
   
   const [selectedFeed, setSelectedFeed] = useState<number | null>(() => {
-    if (sourceId === null) return null;
-    if (sourceId === 'bookmarked') return -1;
-    const numericId = parseInt(sourceId);
+    const params = new URLSearchParams(location.split('?')[1] || '');
+    const source = params.get('source');
+    
+    if (!source) return null;
+    if (source === 'bookmarked') return -1;
+    const numericId = parseInt(source);
     return isNaN(numericId) ? null : numericId;
   });
 
   useEffect(() => {
-    // Persist selected feed to IndexedDB
-    if (selectedFeed !== undefined) {
-      articleStorage.saveState('selectedFeed', selectedFeed);
-    }
+    // Update URL when feed selection changes
+    const newUrl = selectedFeed === null 
+      ? '/' 
+      : selectedFeed === -1 
+        ? '/?source=bookmarked' 
+        : `/?source=${selectedFeed}`;
+    
+    window.history.replaceState(null, '', newUrl);
   }, [selectedFeed]);
-
-  useEffect(() => {
-    // Restore selected feed from IndexedDB if not in URL
-    if (sourceId === null) {
-      articleStorage.getState<number | null>('selectedFeed')
-        .then(saved => {
-          if (saved !== null) setSelectedFeed(saved);
-        })
-        .catch(console.error);
-    }
-  }, []);
   const { theme, setTheme } = useTheme();
   
   const { data: feeds } = useQuery<Feed[]>({

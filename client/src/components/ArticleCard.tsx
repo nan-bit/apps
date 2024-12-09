@@ -13,7 +13,13 @@ export function ArticleCard({ article, selectedFeed }: ArticleCardProps) {
   if (!article) return null;
   
   return (
-    <Link href={`/read/${article.id}?source=${selectedFeed === null ? '' : selectedFeed === -1 ? 'bookmarked' : selectedFeed}`}>
+    <Link href={`/read/${article.id}?source=${
+      selectedFeed === null 
+        ? '' 
+        : selectedFeed === -1 
+          ? 'bookmarked' 
+          : selectedFeed
+    }`}>
       <Card className="cursor-pointer hover:shadow-lg transition-shadow">
         <CardHeader>
           <div className="flex justify-between items-start gap-2">
