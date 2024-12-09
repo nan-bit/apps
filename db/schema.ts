@@ -26,6 +26,7 @@ export const articles = pgTable("articles", {
   pubDate: timestamp("pub_date").notNull(),
   guid: text("guid").notNull(),
   read: boolean("read").default(false),
+  bookmarked: boolean("bookmarked").default(false),
 });
 
 // Define relationships

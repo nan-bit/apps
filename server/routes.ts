@@ -101,6 +101,27 @@ export function registerRoutes(app: Express) {
       .returning();
     res.json(updated[0]);
   });
+  // Bookmarking
+  app.patch("/api/articles/:id/bookmark", async (req, res) => {
+    const { id } = req.params;
+    const { bookmarked } = req.body;
+    const updated = await db
+      .update(articles)
+      .set({ bookmarked })
+      .where(eq(articles.id, parseInt(id)))
+      .returning();
+    res.json(updated[0]);
+  });
+
+  app.get("/api/articles/bookmarked", async (req, res) => {
+    const bookmarkedArticles = await db.query.articles.findMany({
+      where: eq(articles.bookmarked, true),
+      orderBy: (articles, { desc }) => [desc(articles.pubDate)],
+      limit: 50,
+    });
+    res.json(bookmarkedArticles);
+  });
+
 
   // Categories
   app.get("/api/categories", async (req, res) => {

@@ -30,6 +30,14 @@ export function FeedList({ feeds, selectedFeed, onSelectFeed }: FeedListProps) {
             >
               All Articles
             </div>
+            <div
+              className={`p-2 rounded cursor-pointer ${
+                selectedFeed === -1 ? "bg-primary/10" : ""
+              }`}
+              onClick={() => onSelectFeed(-1)}
+            >
+              Bookmarked
+            </div>
             {feeds.map((feed) => (
               <div
                 key={feed.id}

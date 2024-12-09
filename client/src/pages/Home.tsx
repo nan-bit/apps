@@ -19,7 +19,12 @@ export function Home() {
 
   const { data: articles } = useQuery<Article[]>({
     queryKey: ["articles", selectedFeed],
-    queryFn: () => fetch(`/api/articles${selectedFeed ? `?feedId=${selectedFeed}` : ''}`).then((res) => res.json()),
+    queryFn: () => {
+      if (selectedFeed === -1) {
+        return fetch("/api/articles/bookmarked").then((res) => res.json());
+      }
+      return fetch(`/api/articles${selectedFeed ? `?feedId=${selectedFeed}` : ''}`).then((res) => res.json());
+    },
   });
 
   const toggleTheme = () => {
