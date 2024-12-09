@@ -12,7 +12,7 @@ import { articleStorage } from "../lib/indexedDb";
 
 export function Home() {
   const [location] = useLocation();
-  const params = new URLSearchParams(location.split('?')[1]);
+  const params = new URLSearchParams(location.split('?')[1] || '');
   const sourceId = params.get('source');
   
   const [selectedFeed, setSelectedFeed] = useState<number | null>(() => {

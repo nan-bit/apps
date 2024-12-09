@@ -9,7 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function Reader() {
   const { id } = useParams();
   const [location] = useLocation();
-  const params = new URLSearchParams(location.split('?')[1]);
+  const params = new URLSearchParams(location.split('?')[1] || '');
   const source = params.get('source');
 
   const { data: article, isLoading, isError } = useQuery<Article>({
