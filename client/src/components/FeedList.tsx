@@ -1,0 +1,49 @@
+import { Feed } from "@db/schema";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+interface FeedListProps {
+  feeds: Feed[];
+  selectedFeed: number | null;
+  onSelectFeed: (id: number | null) => void;
+}
+
+export function FeedList({ feeds, selectedFeed, onSelectFeed }: FeedListProps) {
+  return (
+    <ScrollArea className="h-[calc(100vh-8rem)]">
+      <Card>
+        <CardHeader>
+          <CardTitle>Your Feeds</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <div
+              className={`p-2 rounded cursor-pointer ${
+                selectedFeed === null ? "bg-primary/10" : ""
+              }`}
+              onClick={() => onSelectFeed(null)}
+            >
+              All Articles
+            </div>
+            {feeds.map((feed) => (
+              <div
+                key={feed.id}
+                className={`p-2 rounded cursor-pointer ${
+                  selectedFeed === feed.id ? "bg-primary/10" : ""
+                }`}
+                onClick={() => onSelectFeed(feed.id)}
+              >
+                {feed.title}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    </ScrollArea>
+  );
+}
