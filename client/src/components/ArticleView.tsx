@@ -5,6 +5,7 @@ import { format } from "date-fns";
 import { Link } from "wouter";
 import { ExternalLink, Bookmark, BookmarkCheck } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useToast } from "@/hooks/use-toast";
 
 interface ArticleViewProps {
   article: Article;
@@ -12,6 +13,7 @@ interface ArticleViewProps {
 
 export function ArticleView({ article }: ArticleViewProps) {
   const queryClient = useQueryClient();
+  const { toast } = useToast();
 
   const bookmarkMutation = useMutation({
     mutationFn: async ({ id, bookmarked }: { id: number; bookmarked: boolean }) => {
@@ -20,12 +22,25 @@ export function ArticleView({ article }: ArticleViewProps) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ bookmarked }),
       });
-      if (!response.ok) throw new Error("Failed to update bookmark");
+      
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to update bookmark");
+      }
+      
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["articles"] });
       queryClient.invalidateQueries({ queryKey: ["article", article.id.toString()] });
+    },
+    onError: (error) => {
+      console.error('Bookmark error:', error);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 

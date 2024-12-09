@@ -80,9 +80,16 @@ export function registerRoutes(app: Express) {
   });
   app.get("/api/articles/:id", async (req, res) => {
     const { id } = req.params;
+    const articleId = parseInt(id);
+    
+    if (isNaN(articleId)) {
+      return res.status(400).json({ error: "Invalid article ID" });
+    }
+
     const article = await db.query.articles.findFirst({
-      where: eq(articles.id, parseInt(id))
+      where: eq(articles.id, articleId)
     });
+    
     if (!article) {
       return res.status(404).json({ error: "Article not found" });
     }
@@ -103,13 +110,30 @@ export function registerRoutes(app: Express) {
   // Bookmarking
   app.patch("/api/articles/:id/bookmark", async (req, res) => {
     const { id } = req.params;
+    const articleId = parseInt(id);
+    
+    if (isNaN(articleId)) {
+      return res.status(400).json({ error: "Invalid article ID" });
+    }
+
     const { bookmarked } = req.body;
-    const updated = await db
-      .update(articles)
-      .set({ bookmarked })
-      .where(eq(articles.id, parseInt(id)))
-      .returning();
-    res.json(updated[0]);
+    
+    try {
+      const updated = await db
+        .update(articles)
+        .set({ bookmarked })
+        .where(eq(articles.id, articleId))
+        .returning();
+        
+      if (!updated.length) {
+        return res.status(404).json({ error: "Article not found" });
+      }
+      
+      res.json(updated[0]);
+    } catch (error) {
+      console.error('Bookmark update error:', error);
+      res.status(500).json({ error: "Failed to update bookmark" });
+    }
   });
 
   app.get("/api/articles/bookmarked", async (req, res) => {
