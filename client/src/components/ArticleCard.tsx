@@ -9,6 +9,8 @@ interface ArticleCardProps {
 }
 
 export function ArticleCard({ article }: ArticleCardProps) {
+  if (!article) return null;
+  
   return (
     <Link href={`/read/${article.id}`}>
       <Card className="cursor-pointer hover:shadow-lg transition-shadow">

@@ -69,14 +69,24 @@ export function registerRoutes(app: Express) {
 
   // Articles
   app.get("/api/articles", async (req, res) => {
-    const { feedId } = req.query;
-    
-    const allArticles = await db.query.articles.findMany({
-      where: feedId ? eq(articles.feedId, parseInt(feedId as string)) : undefined,
-      orderBy: (articles, { desc }) => [desc(articles.pubDate)],
-      limit: 50,
-    });
-    res.json(allArticles);
+    try {
+      const { feedId } = req.query;
+      
+      const allArticles = await db.query.articles.findMany({
+        where: feedId ? eq(articles.feedId, parseInt(feedId as string)) : undefined,
+        orderBy: (articles, { desc }) => [desc(articles.pubDate)],
+        limit: 50,
+      });
+      
+      if (!allArticles) {
+        return res.status(404).json({ error: "No articles found" });
+      }
+      
+      res.json(allArticles);
+    } catch (error) {
+      console.error('Error fetching articles:', error);
+      res.status(500).json({ error: "Failed to fetch articles" });
+    }
   });
 
   app.get("/api/articles/bookmarked", async (req, res) => {

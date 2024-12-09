@@ -17,7 +17,7 @@ export function Home() {
     queryFn: () => fetch("/api/feeds").then((res) => res.json()),
   });
 
-  const { data: articles = [] } = useQuery<Article[]>({
+  const { data: articles = [], isError, error } = useQuery<Article[]>({
     queryKey: ["articles", selectedFeed],
     queryFn: async () => {
       const endpoint = selectedFeed === -1 
@@ -26,7 +26,8 @@ export function Home() {
         
       const response = await fetch(endpoint);
       if (!response.ok) {
-        throw new Error('Failed to fetch articles');
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to fetch articles');
       }
       return response.json();
     },
@@ -60,9 +61,15 @@ export function Home() {
 
           <main className="md:col-span-3">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {articles?.map((article) => (
-                <ArticleCard key={article.id} article={article} />
-              ))}
+              {isError ? (
+                <div className="col-span-full text-center text-destructive">
+                  {error instanceof Error ? error.message : 'Failed to load articles'}
+                </div>
+              ) : (
+                articles.map((article) => (
+                  <ArticleCard key={article.id} article={article} />
+                ))
+              )}
             </div>
           </main>
         </div>
