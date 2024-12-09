@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlusIcon } from "lucide-react";
@@ -11,6 +11,7 @@ export function AddFeedDialog() {
   const [url, setUrl] = useState("");
   const [open, setOpen] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -50,11 +51,7 @@ export function AddFeedDialog() {
       if (validation.isValid) {
         addFeedMutation.mutate(url);
       } else {
-        toast({
-          title: "Invalid RSS feed",
-          description: validation.error || "Please enter a valid RSS feed URL.",
-          variant: "destructive",
-        });
+        setError(validation.error || "Please enter a valid RSS feed URL.");
       }
     } finally {
       setIsValidating(false);
@@ -62,7 +59,16 @@ export function AddFeedDialog() {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog 
+      open={open} 
+      onOpenChange={(newOpen) => {
+        setOpen(newOpen);
+        if (!newOpen) {
+          setUrl("");
+          setError(null);
+          setIsValidating(false);
+        }
+      }}>
       <DialogTrigger asChild>
         <Button>
           <PlusIcon className="mr-2 h-4 w-4" />
@@ -72,13 +78,25 @@ export function AddFeedDialog() {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add New RSS Feed</DialogTitle>
+          <DialogDescription>
+            Enter the URL of an RSS feed you'd like to follow
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            placeholder="Enter RSS feed URL"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-          />
+          <div className="space-y-2">
+            <Input
+              placeholder="Enter RSS feed URL"
+              value={url}
+              onChange={(e) => {
+                setUrl(e.target.value);
+                setError(null);
+              }}
+              aria-invalid={!!error}
+            />
+            {error && (
+              <p className="text-sm text-destructive">{error}</p>
+            )}
+          </div>
           <Button 
             type="submit" 
             disabled={isValidating || addFeedMutation.isPending || !url.trim()}
