@@ -10,6 +10,7 @@ import { validateRssFeed } from "../lib/rssParser";
 export function AddFeedDialog() {
   const [url, setUrl] = useState("");
   const [open, setOpen] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -43,14 +44,20 @@ export function AddFeedDialog() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (await validateRssFeed(url)) {
-      addFeedMutation.mutate(url);
-    } else {
-      toast({
-        title: "Invalid RSS feed",
-        description: "Please enter a valid RSS feed URL.",
-        variant: "destructive",
-      });
+    setIsValidating(true);
+    try {
+      const validation = await validateRssFeed(url);
+      if (validation.isValid) {
+        addFeedMutation.mutate(url);
+      } else {
+        toast({
+          title: "Invalid RSS feed",
+          description: validation.error || "Please enter a valid RSS feed URL.",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setIsValidating(false);
     }
   };
 
@@ -72,8 +79,16 @@ export function AddFeedDialog() {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
           />
-          <Button type="submit" disabled={addFeedMutation.isPending}>
-            {addFeedMutation.isPending ? "Adding..." : "Add Feed"}
+          <Button 
+            type="submit" 
+            disabled={isValidating || addFeedMutation.isPending || !url.trim()}
+          >
+            {isValidating 
+              ? "Validating..." 
+              : addFeedMutation.isPending 
+                ? "Adding..." 
+                : "Add Feed"
+            }
           </Button>
         </form>
       </DialogContent>

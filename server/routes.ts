@@ -18,6 +18,20 @@ export function registerRoutes(app: Express) {
   });
 
   app.post("/api/feeds", async (req, res) => {
+  app.post("/api/feeds/validate", async (req, res) => {
+    const { url } = req.body;
+    try {
+      const feed = await parser.parseURL(url);
+      if (feed && feed.items && feed.items.length > 0) {
+        res.status(200).json({ valid: true });
+      } else {
+        res.status(400).json({ error: "Invalid RSS feed format" });
+      }
+    } catch (error) {
+      res.status(400).json({ error: "Failed to parse RSS feed" });
+    }
+  });
+
     const { url, categoryId } = req.body;
     try {
       const feed = await parser.parseURL(url);

@@ -1,4 +1,4 @@
-export async function validateRssFeed(url: string): Promise<boolean> {
+export async function validateRssFeed(url: string): Promise<{ isValid: boolean; error?: string }> {
   try {
     const response = await fetch(`/api/feeds/validate`, {
       method: 'POST',
@@ -7,8 +7,14 @@ export async function validateRssFeed(url: string): Promise<boolean> {
       },
       body: JSON.stringify({ url }),
     });
-    return response.ok;
+    
+    if (!response.ok) {
+      const data = await response.json();
+      return { isValid: false, error: data.error || 'Invalid RSS feed' };
+    }
+    
+    return { isValid: true };
   } catch (error) {
-    return false;
+    return { isValid: false, error: 'Network error occurred' };
   }
 }
